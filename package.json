@@ -1,0 +1,59 @@
+{
+  "name": "@byloth/squeeze",
+  "version": "1.0.0-dev.1",
+  "description": "",
+  "keywords": [],
+  "homepage": "https://github.com/Byloth/squeeze#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Byloth/squeeze.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Byloth/squeeze/issues"
+  },
+  "author": {
+    "name": "Matteo Bilotta",
+    "email": "me@byloth.dev",
+    "url": "https://www.byloth.dev/"
+  },
+  "license": "GPL-3.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check:types": "vue-tsc",
+    "lint": "eslint --ext .cjs,.js,.json,.ts,.vue --ignore-path .gitignore .",
+    "lint:prod": "export NODE_ENV=\"production\" && yarn lint",
+    "ci": "yarn install --frozen-lockfile"
+  },
+  "dependencies": {
+    "@byloth/core": "^1.1.7",
+    "@byloth/exceptions": "^2.1.0",
+    "@byloth/vuert": "^1.2.0-rc.4",
+    "@fortawesome/fontawesome-free": "^6.4.2",
+    "@vueuse/core": "^10.6.1",
+    "axios": "^1.6.2",
+    "bootstrap": "^5.3.2",
+    "graphql": "^16.8.1",
+    "graphql-tag": "^2.12.6",
+    "pinia": "^2.1.7",
+    "vue": "^3.3.9",
+    "vue-router": "^4.2.5"
+  },
+  "devDependencies": {
+    "@byloth/eslint-config-typescript": "^2.6.7",
+    "@byloth/eslint-config-vue": "^2.6.7",
+    "@typescript-eslint/eslint-plugin": "^6.12.0",
+    "@typescript-eslint/parser": "^6.12.0",
+    "@vitejs/plugin-vue": "^4.5.0",
+    "eslint": "^8.54.0",
+    "eslint-plugin-vue": "^9.18.1",
+    "sass": "^1.69.5",
+    "typescript": "^5.3.2",
+    "vite": "^5.0.2",
+    "vue-eslint-parser": "^9.3.2",
+    "vue-tsc": "^1.8.22"
+  },
+  "private": true
+}
