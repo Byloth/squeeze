@@ -1,0 +1,40 @@
+// Colors...
+//
+$not-quite-black: #212529;
+$somewhat-gray: #ADB5BD;
+$slightly-off-white: #F8F9FA;
+
+$primary: #0D6EFD;
+$secondary: #6C757D;
+
+$danger: #DC3545;
+$warning: #FFC107;
+$success: #198754;
+$info: #0DCAF0;
+
+$chrome-scrollbar-color: #F1F1F1;
+$chrome-link-preview-color: #DEE1E6;
+$chrome-incognito-color: #35363A;
+
+// Fonts...
+//
+$font-family: unquote("Ubuntu, Roboto, Helvetica, Arial, sans-serif");
+
+// Sizes...
+//
+$xs-size: 0;
+$sm-size: 576px;
+$md-size: 768px;
+$lg-size: 992px;
+$xl-size: 1200px;
+$xxl-size: 1400px;
+
+$max-mobile-size: $sm-size - 1px;
+$min-tablet-size: $sm-size;
+$max-tablet-size: $lg-size - 1px;
+$min-desktop-size: $lg-size;
+
+// Transitions...
+//
+$transition-duration: 150ms;
+$transition-timing: ease-in-out;

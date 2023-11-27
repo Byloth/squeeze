@@ -1,0 +1,141 @@
+@use "../variables";
+
+// Configurations...
+//
+$enable-gradients: true;
+$enable-shadows: true;
+
+// Grid breakpoints...
+//
+$grid-breakpoints:
+(
+    xs: variables.$xs-size,
+    sm: variables.$sm-size,
+    md: variables.$md-size,
+    lg: variables.$lg-size,
+    xl: variables.$xl-size,
+    xxl: variables.$xxl-size
+);
+$grid-gutter-width: 0px;
+
+// Style...
+//
+$link-decoration: none;
+$link-hover-decoration: underline;
+
+// Theme...
+//
+$primary: variables.$primary;
+$secondary: variables.$secondary;
+
+$danger: variables.$danger;
+$warning: variables.$warning;
+$success: variables.$success;
+$info: variables.$info;
+
+$light: variables.$slightly-off-white;
+$dark: variables.$not-quite-black;
+
+$theme-colors:
+(
+    "primary": $primary,
+    "secondary": $secondary,
+
+    "danger": $danger,
+    "warning": $warning,
+    "success": $success,
+    "info": $info,
+
+    "light": $light,
+    "dark": $dark
+);
+
+@import "bootstrap/scss/bootstrap";
+
+a
+{
+    transition: color variables.$transition-duration variables.$transition-timing;
+}
+
+.alert
+{
+    @each $color, $value in $theme-colors
+    {
+        &.alert-#{$color}
+        {
+            $alert-background: shade-color($value, 80%);
+            $alert-border: shade-color($value, 40%);
+            $alert-color: tint-color($value, 40%);
+
+            hr
+            {
+                background-color: rgba($alert-color, 0.5);
+            }
+
+            .alert-link,
+            .btn-close,
+            .btn-link
+            {
+                box-shadow: 0px 0px 0px 0px rgba($value, 0);
+                color: $alert-color;
+
+                &:focus-visible
+                {
+                    background-color: unset;
+                    background-image: unset;
+                    box-shadow: 0px 0px 0px 0.25rem rgba($value, 0.25);
+                }
+            }
+            .alert-link,
+            .btn-link
+            {
+                &:hover
+                {
+                    color: shift-color($alert-color, $link-shade-percentage);
+                }
+                &:active
+                {
+                    color: shift-color($alert-color, -$link-shade-percentage);
+                }
+            }
+            .btn-close
+            {
+                transition: opacity variables.$transition-duration variables.$transition-timing;
+            }
+
+            .btn-primary
+            {
+                @include button-variant($value, $value);
+            }
+            .btn-secondary
+            {
+                $outline-color: tint-color($value, 25%);
+
+                @include button-outline-variant($outline-color);
+
+                background-color: rgba($outline-color, 0);
+
+                &:hover,
+                &:active
+                {
+                    background-color: $outline-color;
+                    color: #000000;
+                }
+                &:focus-visible
+                {
+                    color: $outline-color;
+                }
+            }
+        }
+    }
+}
+
+.btn:disabled
+{
+    cursor: not-allowed;
+    pointer-events: auto;
+}
+.btn-link
+{
+    background-image: none;
+}
