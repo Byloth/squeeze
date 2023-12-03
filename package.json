@@ -38,12 +38,14 @@
     "graphql": "^16.8.1",
     "graphql-tag": "^2.12.6",
     "pinia": "^2.1.7",
+    "uuid": "^9.0.1",
     "vue": "^3.3.9",
     "vue-router": "^4.2.5"
   },
   "devDependencies": {
     "@byloth/eslint-config-typescript": "^2.6.7",
     "@byloth/eslint-config-vue": "^2.6.7",
+    "@types/uuid": "^9.0.7",
     "@typescript-eslint/eslint-plugin": "^6.12.0",
     "@typescript-eslint/parser": "^6.12.0",
     "@vitejs/plugin-vue": "^4.5.0",
