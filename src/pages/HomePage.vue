@@ -58,13 +58,15 @@
 
                 const [resolve, reject] = this._messages.get(content.id)!;
 
-                if (content.status === "ok") { resolve(content); }
-                else if (content.status === "ko") { reject(content); }
+                if (content.status === "success") { resolve(content); }
+                else if (content.status === "error") { reject(content); }
 
                 this._messages.delete(content.id);
             }
-
-            console.log("Message received:", content);
+            else
+            {
+                console.log("Message received:", content);
+            }
         };
         protected _onError = (evt: Event) =>
         {
@@ -158,10 +160,14 @@
     const createRoom = async () =>
     {
         await $aziraphale.createRoom("Test Room", "room.test");
+
+        console.log("Room created successfully.");
     };
     const joinRoom = async () =>
     {
         await $aziraphale.joinRoom("room.test");
+
+        console.log("Room joined successfully.");
     };
 
     const disconnect = () =>
