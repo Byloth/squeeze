@@ -96,19 +96,16 @@
             this._messages.clear();
         };
 
-        protected _sendRaw(type: string, roomId: string, content?: Record<string, unknown>)
+        protected _sendRaw(type: string, payload: Record<string, unknown>)
         {
             if (!(this.isConnected)) { throw new Error("Not connected."); }
 
             return new Promise((resolve, reject) =>
             {
                 const id = uuid4().replaceAll("-", "");
-                const message: Record<string, unknown> = { id, type, roomId };
-
-                if (content) { message.content = content; }
 
                 this._messages.set(id, [resolve, reject]);
-                this._socket!.send(JSON.stringify(message));
+                this._socket!.send(JSON.stringify({ id, type, payload }));
             });
         }
 
@@ -136,17 +133,23 @@
             });
         }
 
-        public async createRoom(name: string, roomId?: string)
+        public async createRoom(roomType: string)
         {
             if (!(this.isConnected)) { throw new Error("Not connected."); }
 
-            return await this._sendRaw("room:create", roomId ?? uuid4().replaceAll("-", ""), { name });
+            return await this._sendRaw("room:create", { roomType });
         }
-        public async joinRoom(roomId: string)
+        public async joinRoomById(roomId: string)
         {
             if (!(this.isConnected)) { throw new Error("Not connected."); }
 
-            return await this._sendRaw("room:join", roomId);
+            return await this._sendRaw("room:join:id", { roomId });
+        }
+        public async joinRoomByType(roomType: string)
+        {
+            if (!(this.isConnected)) { throw new Error("Not connected."); }
+
+            return await this._sendRaw("room:join:type", { roomType });
         }
 
         public disconnect(code?: number | undefined, reason?: string | undefined)
@@ -168,15 +171,21 @@
         isConnected.value = $aziraphale.isConnected;
     };
 
-    const createRoom = async () =>
+    const createRoom = async (roomType: string) =>
     {
-        await $aziraphale.createRoom("Test Room", "room.test");
+        await $aziraphale.createRoom(roomType);
 
         console.log("Room created successfully.");
     };
-    const joinRoom = async () =>
+    const joinRoomById = async (roomId: string) =>
     {
-        await $aziraphale.joinRoom("room.test");
+        await $aziraphale.joinRoomById(roomId);
+
+        console.log("Room joined successfully.");
+    };
+    const joinRoomByType = async (roomType: string) =>
+    {
+        await $aziraphale.joinRoomByType(roomType);
 
         console.log("Room joined successfully.");
     };
@@ -194,12 +203,12 @@
         <h1>Home page</h1>
         <div v-if="isConnected">
             <div class="col">
-                <button class="btn btn-primary" @click="createRoom">
+                <button class="btn btn-primary" @click="createRoom('room.test')">
                     Create new Room
                 </button>
             </div>
             <div class="col">
-                <button class="btn btn-info" @click="joinRoom">
+                <button class="btn btn-info" @click="joinRoomByType('room.test')">
                     Join exsiting Room
                 </button>
             </div>
