@@ -5,6 +5,7 @@ import type { DismissibleAlert } from "@byloth/vuert";
 
 import * as GraphQLExceptions from "@/services/graphql/exceptions";
 import useUserStore from "@/stores/user";
+import { CrowleyException } from "@/exceptions";
 
 const ERROR_ALERT: DismissibleAlert = {
     type: "error",
@@ -40,13 +41,13 @@ const errorsHandler: Plugin = {
         };
 
         const _handler = new HandlerBuilder()
-            .on(NetworkException, (exc) =>
+            .on(CrowleyException, (exc) =>
             {
                 $vuert.emit({
                     type: "error",
-                    icon: "link-slash",
-                    title: "Network error!",
-                    message: `${exc.message} Please, try again later.`,
+                    icon: "reply",
+                    title: "Crowley error!",
+                    message: exc.message,
                     dismissible: true
                 });
 
@@ -98,6 +99,18 @@ const errorsHandler: Plugin = {
                     type: "error",
                     icon: "shield-halved",
                     title: "Too many requests!",
+                    message: `${exc.message} Please, try again later.`,
+                    dismissible: true
+                });
+
+                return new HandledException(exc);
+            })
+            .on(NetworkException, (exc) =>
+            {
+                $vuert.emit({
+                    type: "error",
+                    icon: "link-slash",
+                    title: "Network error!",
                     message: `${exc.message} Please, try again later.`,
                     dismissible: true
                 });

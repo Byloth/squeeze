@@ -5,6 +5,9 @@
     import type { PromiseResolver, PromiseRejecter } from "@byloth/core";
     import { useVuert } from "@byloth/vuert";
 
+    import type { CrowleyMessage } from "@/core/types";
+    import { CrowleyException } from "@/exceptions";
+
     import ContainerLayout from "@/layouts/ContainerLayout.vue";
 
     const $vuert = useVuert();
@@ -51,15 +54,23 @@
         };
         protected _onMessage = (evt: MessageEvent) =>
         {
-            const content = JSON.parse(evt.data);
-            if (content.id)
+            const content: CrowleyMessage = JSON.parse(evt.data);
+            if ("id" in content)
             {
                 if (!(this._messages.has(content.id))) { throw new Error("Unknown message ID."); }
 
                 const [resolve, reject] = this._messages.get(content.id)!;
 
-                if (content.status === "success") { resolve(content); }
-                else if (content.status === "error") { reject(content); }
+                if (content.status === "success")
+                {
+                    console.log(content);
+
+                    resolve();
+                }
+                else if (content.status === "error")
+                {
+                    reject(new CrowleyException(content));
+                }
 
                 this._messages.delete(content.id);
             }
