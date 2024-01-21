@@ -24,14 +24,26 @@
     //     }]
     // }));
 
+    class Room
+    {
+        public readonly id: string;
+        public readonly type: string;
+
+        public constructor(id: string, type: string)
+        {
+            this.id = id;
+            this.type = type;
+        }
+    }
+
     class Aziraphale
     {
-        protected _isConnected: boolean;
-        protected _messages: Map<string, [PromiseResolver, PromiseRejecter]>;
+        private _isConnected: boolean;
+        private _messages: Map<string, [PromiseResolver, PromiseRejecter]>;
 
-        protected _socket?: WebSocket;
+        private _socket?: WebSocket;
 
-        public readonly endpoint: string;
+        private readonly endpoint: string;
 
         public get isConnected(): boolean
         {
