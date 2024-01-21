@@ -164,6 +164,9 @@
 
     const isConnected = ref(false);
 
+    const roomId = ref("");
+    const message = ref("");
+
     const connect = async () =>
     {
         await $aziraphale.connect();
@@ -203,15 +206,34 @@
         <h1>Home page</h1>
         <div v-if="isConnected">
             <div class="col">
-                <button class="btn btn-primary" @click="createRoom('room.test')">
+                <button class="btn btn-primary" @click="createRoom('room.message')">
                     Create new Room
                 </button>
             </div>
             <div class="col">
-                <button class="btn btn-info" @click="joinRoomByType('room.test')">
-                    Join exsiting Room
+                <button class="btn btn-info" @click="joinRoomByType('room.message')">
+                    Join existing Room
                 </button>
             </div>
+            <hr />
+            <div class="col">
+                <input v-model="roomId"
+                       class="form-control"
+                       placeholder="Room ID" />
+                <button class="btn btn-info" @click="joinRoomById(roomId)">
+                    Join specific Room
+                </button>
+            </div>
+            <hr />
+            <div class="col">
+                <input v-model="message"
+                       class="form-control"
+                       placeholder="Write something..." />
+                <button class="btn btn-info" @click="joinRoomById(roomId)">
+                    Send message
+                </button>
+            </div>
+            <hr />
             <div class="col">
                 <button class="btn btn-warning" @click="disconnect">
                     Disconnect
