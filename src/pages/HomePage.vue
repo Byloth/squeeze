@@ -5,7 +5,8 @@
     import type { PromiseResolver, PromiseRejecter } from "@byloth/core";
     import { useVuert } from "@byloth/vuert";
 
-    import type { CrowleyMessage } from "@/core/types";
+    import { CrowleyResponseStatus } from "@/core/types";
+    import type { CrowleyMessageAck, CrowleyMessageNack, CrowleyMessageResponse } from "@/core/types";
     import { CrowleyException } from "@/exceptions";
 
     import ContainerLayout from "@/layouts/ContainerLayout.vue";
@@ -39,7 +40,7 @@
     class Aziraphale
     {
         private _isConnected: boolean;
-        private _messages: Map<string, [PromiseResolver, PromiseRejecter]>;
+        private _messages: Map<string, [PromiseResolver<CrowleyMessageAck>, PromiseRejecter<CrowleyException>]>;
 
         private _socket?: WebSocket;
 
@@ -66,29 +67,28 @@
         };
         protected _onMessage = (evt: MessageEvent) =>
         {
-            const content: CrowleyMessage = JSON.parse(evt.data);
+            const content: CrowleyMessageResponse = JSON.parse(evt.data);
+
+            console.log("Message received:", content);
+
             if ("id" in content)
             {
                 if (!(this._messages.has(content.id))) { throw new Error("Unknown message ID."); }
 
                 const [resolve, reject] = this._messages.get(content.id)!;
 
-                if (content.status === "success")
+                if (content.status === CrowleyResponseStatus.SUCCESS)
                 {
                     console.log(content);
 
-                    resolve();
+                    resolve(content);
                 }
-                else if (content.status === "error")
+                else if (content.status === CrowleyResponseStatus.ERROR)
                 {
                     reject(new CrowleyException(content));
                 }
 
                 this._messages.delete(content.id);
-            }
-            else
-            {
-                console.log("Message received:", content);
             }
         };
         protected _onError = (evt: Event) =>
@@ -101,7 +101,16 @@
 
             for (const [_i, [_, reject]] of this._messages)
             {
-                reject(new Error("Connection closed."));
+                reject(new CrowleyException({
+                    id: "00000000000000000000000000000000",
+                    status: CrowleyResponseStatus.ERROR,
+                    message: "Connection closed.",
+                    details: {
+                        errorId: "0x00000000",
+                        errorCode: "ConnectionError"
+                    },
+                    type: "connection:closed"
+                }));
             }
 
             this._isConnected = false;
@@ -112,7 +121,7 @@
         {
             if (!(this.isConnected)) { throw new Error("Not connected."); }
 
-            return new Promise((resolve, reject) =>
+            return new Promise<CrowleyMessageAck>((resolve, reject) =>
             {
                 const id = uuid4().replaceAll("-", "");
 
@@ -188,9 +197,9 @@
 
     const createRoom = async (roomType: string) =>
     {
-        await $aziraphale.createRoom(roomType);
+        const response = await $aziraphale.createRoom(roomType);
 
-        console.log("Room created successfully.");
+        console.log("Room created successfully:", response);
     };
     const joinRoomById = async (roomId: string) =>
     {

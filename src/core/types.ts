@@ -1,34 +1,32 @@
-export interface CrowleyErrorPayload
+export enum CrowleyResponseStatus
+{
+    SUCCESS = "SUCCESS",
+    ERROR = "ERROR"
+}
+
+export interface CrowleyErrorDetails
 {
     errorId: string;
     errorCode: string;
 }
-
 export interface CrowleyError
 {
-    status: "error";
+    status: CrowleyResponseStatus.ERROR;
     message: string;
-    payload: CrowleyErrorPayload;
-    type: "ERROR";
+    details: CrowleyErrorDetails;
+    type: string;
 }
-export interface CrowleyMessageError extends Omit<CrowleyError, "type">
+
+export type Payload = Record<string, unknown>;
+export interface CrowleyMessage<P extends Payload = Payload>
 {
-    id: string;
-    type: "MESSAGE_ERROR";
+    status: CrowleyResponseStatus.SUCCESS;
+    payload: P;
+    type: string;
 }
 
-export type CrowleyErrorResponse = CrowleyError | CrowleyMessageError;
+export interface CrowleyMessageAck<P extends Payload = Payload> extends CrowleyMessage<P> { id: string; }
+export interface CrowleyMessageNack extends CrowleyError { id: string; }
 
-export interface CrowleyMessageSuccess
-{
-    id: string;
-    status: "success";
-}
-
-export interface CrowleyRoomMessage<T extends Record<string, unknown> = Record<string, unknown>>
-{
-    roomId: string;
-    payload: T;
-}
-
-export type CrowleyMessage = CrowleyRoomMessage | CrowleyMessageSuccess | CrowleyErrorResponse;
+export type CrowleyErrorResponse = CrowleyError | CrowleyMessageNack;
+export type CrowleyMessageResponse<P extends Payload = Payload> = CrowleyMessageAck<P> | CrowleyErrorResponse;
