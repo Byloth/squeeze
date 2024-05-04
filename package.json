@@ -28,10 +28,10 @@
     "ci": "yarn install --frozen-lockfile"
   },
   "dependencies": {
-    "@byloth/core": "^1.3.4",
+    "@byloth/core": "^1.5.0-rc.2",
     "@byloth/exceptions": "^2.2.4",
-    "@byloth/vuert": "^1.3.0",
-    "@fortawesome/fontawesome-free": "^6.5.1",
+    "@byloth/vuert": "^1.3.2",
+    "@fortawesome/fontawesome-free": "^6.5.2",
     "@vueuse/core": "^10.9.0",
     "axios": "^1.6.8",
     "bootstrap": "^5.3.3",
@@ -39,22 +39,22 @@
     "graphql-tag": "^2.12.6",
     "pinia": "^2.1.7",
     "uuid": "^9.0.1",
-    "vue": "^3.4.21",
-    "vue-router": "^4.3.0"
+    "vue": "^3.4.26",
+    "vue-router": "^4.3.2"
   },
   "devDependencies": {
-    "@byloth/eslint-config-nuxt": "^2.7.0",
+    "@byloth/eslint-config-nuxt": "^2.8.1",
     "@types/uuid": "^9.0.8",
-    "@typescript-eslint/eslint-plugin": "^7.3.1",
-    "@typescript-eslint/parser": "^7.3.1",
+    "@typescript-eslint/eslint-plugin": "^7.8.0",
+    "@typescript-eslint/parser": "^7.8.0",
     "@vitejs/plugin-vue": "^5.0.4",
     "eslint": "^8.57.0",
-    "eslint-plugin-vue": "^9.24.0",
-    "sass": "^1.72.0",
-    "typescript": "^5.4.3",
-    "vite": "^5.2.6",
+    "eslint-plugin-vue": "^9.25.0",
+    "sass": "^1.76.0",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11",
     "vue-eslint-parser": "^9.4.2",
-    "vue-tsc": "^2.0.7"
+    "vue-tsc": "^2.0.16"
   },
   "private": true
 }

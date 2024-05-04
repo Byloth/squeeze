@@ -1,5 +1,6 @@
 import { Exception } from "@byloth/exceptions";
 
+import { CrowleyResponseStatus } from "@/core/types";
 import type { CrowleyErrorResponse } from "@/core/types";
 
 export class AziraphaleException extends Exception
@@ -12,6 +13,20 @@ export class AziraphaleException extends Exception
 
 export class CrowleyException extends AziraphaleException
 {
+    public static ConnectionClosed(id: string): CrowleyException
+    {
+        return new CrowleyException(({
+            id: id,
+            status: CrowleyResponseStatus.ERROR,
+            message: "Connection closed.",
+            details: {
+                errorId: "0x21000011",
+                errorCode: "CONNECTION_CLOSED"
+            },
+            type: "aziraphale:error"
+        }));
+    }
+
     public readonly id: string;
     public readonly code: string;
 
