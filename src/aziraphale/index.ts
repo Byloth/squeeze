@@ -1,144 +1,92 @@
-import { v4 as uuid4 } from "uuid";
+import Connection from "./connection";
+import Messenger from "./messenger";
+import Room from "./room";
+import type { RoomPayload } from "./room";
 
-import { TimedPromise } from "@byloth/core";
-import type { PromiseResolver, PromiseRejecter } from "@byloth/core";
+/*
+ * TODO:
+ *  - Implementare la gestione delle Stanze.
+ *  - Implementare un sistema per recuperare la lista delle Stanze pubbliche.
+ *  - Implementare un sistema per limitare il numero di Client per Stanza.
+ *  - Implementare un sistema per la gestione delle Stanze Private (con password).
+ *  - Implementare un sistema per accettare o rifiutare le richieste di ingresso nelle Stanze.
+ *  - Implementare un sistema per la gestione di stanze permanenti / temporanee.
+ *  - Implementare un sistema per la gestione della Riconnessione del Client.
+ *  - Implementare la gestione dello Stato del Client.
+ *  - Implementare un sistema per la Sincronizzazione dello Stato del Client (sola lettura).
+ *  - Implementare la gestione dello Stato della Stanza.
+ *  - Implementare un sistema per la Sincronizzazione dello Stato della Stanza tra tutti i Client (sola lettura).
+ *  - Implementare l'invio dei messaggi in formato binario (dovrebbe essere più efficiente).
+ *  - Implementare un sistema per permettere all'applicazione di scalare orizzontalmente.
+ */
 
-import { CrowleyResponseStatus } from "@/core/types";
-import type { CrowleyMessageAck, CrowleyMessageResponse } from "@/core/types";
-import { CrowleyException } from "@/exceptions";
-
-export default class Aziraphale
+export class Server
 {
-    public static readonly TIMEOUT = 5000;
-
-    private _isConnected: boolean;
-    private _messages: Map<string, [PromiseResolver<CrowleyMessageAck>, PromiseRejecter<CrowleyException>]>;
-
-    private _socket?: WebSocket;
-
-    private readonly endpoint: string;
+    protected _connection: Connection;
+    protected _messenger: Messenger;
 
     public get isConnected(): boolean
     {
-        return this._isConnected;
+        return this._connection.isOpen;
     }
 
     public constructor(endpoint: string)
     {
-        this._isConnected = false;
-        this._messages = new Map();
-
-        this.endpoint = endpoint;
-    }
-
-    protected _onOpen = (evt: Event) =>
-    {
-        console.log("Connection established:", evt);
-
-        this._isConnected = true;
-    };
-    protected _onMessage = (evt: MessageEvent) =>
-    {
-        const content: CrowleyMessageResponse = JSON.parse(evt.data);
-
-        console.log("Message received:", content);
-
-        if ("id" in content)
+        this._connection = new Connection(endpoint);
+        this._messenger = new Messenger(this._connection);
+        this._messenger.onMessage((message) =>
         {
-            if (!(this._messages.has(content.id))) { throw new Error("Unknown message ID."); }
-
-            const [resolve, reject] = this._messages.get(content.id)!;
-
-            if (content.status === CrowleyResponseStatus.SUCCESS)
-            {
-                resolve(content);
-            }
-            else if (content.status === CrowleyResponseStatus.ERROR)
-            {
-                reject(new CrowleyException(content));
-            }
-
-            this._messages.delete(content.id);
-        }
-    };
-    protected _onError = (evt: Event) =>
-    {
-        console.log("Connection error:", evt);
-    };
-    protected _onClose = (evt: CloseEvent) =>
-    {
-        console.log("Connection closed:", evt);
-
-        for (const [id, [_, reject]] of this._messages)
-        {
-            reject(CrowleyException.ConnectionClosed(id));
-        }
-
-        this._isConnected = false;
-        this._messages.clear();
-    };
-
-    protected _sendRaw(type: string, payload: Record<string, unknown>)
-    {
-        if (!(this.isConnected)) { throw new Error("Not connected."); }
-
-        return new TimedPromise<CrowleyMessageAck>((resolve, reject) =>
-        {
-            const id = uuid4().replaceAll("-", "");
-
-            this._messages.set(id, [resolve, reject]);
-            this._socket!.send(JSON.stringify({ id, type, payload }));
-
-        }, Aziraphale.TIMEOUT);
+            // eslint-disable-next-line no-console
+            console.warn("Message received without any IDs; not implemented yet.");
+        });
     }
 
     public connect()
     {
-        if (this.isConnected) { throw new Error("Already connected."); }
-
-        return new Promise((resolve, reject) =>
+        const connection = new Promise<void>((resolve, reject) =>
         {
-            this._socket = new WebSocket(this.endpoint);
-            this._socket.addEventListener("open", (evt) =>
+            const unsubscribeOpen = this._connection.onOpen(() =>
             {
-                this._onOpen(evt);
+                unsubscribeClose();
+                unsubscribeOpen();
 
-                resolve(evt);
+                resolve();
             });
-            this._socket.addEventListener("message", this._onMessage);
-            this._socket.addEventListener("error", this._onError);
-            this._socket.addEventListener("close", (evt) =>
+            const unsubscribeClose = this._connection.onClose((evt) =>
             {
-                this._onClose(evt);
+                unsubscribeClose();
+                unsubscribeOpen();
 
                 reject(evt);
             });
         });
+
+        this._connection.open();
+
+        return connection;
     }
 
     public async createRoom(roomType: string)
     {
-        if (!(this.isConnected)) { throw new Error("Not connected."); }
+        const response = await this._messenger.prayAndWait<RoomPayload>("room:create", { roomType });
 
-        return await this._sendRaw("room:create", { roomType });
+        return new Room(this._messenger, response.payload);
     }
     public async joinRoomById(roomId: string)
     {
-        if (!(this.isConnected)) { throw new Error("Not connected."); }
+        const response = await this._messenger.prayAndWait<RoomPayload>("room:join:id", { roomId });
 
-        return await this._sendRaw("room:join:id", { roomId });
+        return new Room(this._messenger, response.payload);
     }
     public async joinRoomByType(roomType: string)
     {
-        if (!(this.isConnected)) { throw new Error("Not connected."); }
+        const response = await this._messenger.prayAndWait<RoomPayload>("room:join:type", { roomType });
 
-        return await this._sendRaw("room:join:type", { roomType });
+        return new Room(this._messenger, response.payload);
     }
 
-    public disconnect(code?: number | undefined, reason?: string | undefined)
+    public disconnect(code?: number, reason?: string)
     {
-        if (!(this.isConnected)) { throw new Error("Not connected."); }
-
-        this._socket!.close();
+        this._connection.close(code, reason);
     }
 }

@@ -1,7 +1,7 @@
 import { Exception } from "@byloth/exceptions";
 
-import { CrowleyResponseStatus } from "@/core/types";
-import type { CrowleyErrorResponse } from "@/core/types";
+import { MessageStatus } from "@/aziraphale/types";
+import type { MessageError } from "@/aziraphale/types";
 
 export class AziraphaleException extends Exception
 {
@@ -13,11 +13,10 @@ export class AziraphaleException extends Exception
 
 export class CrowleyException extends AziraphaleException
 {
-    public static ConnectionClosed(id: string): CrowleyException
+    public static ConnectionClosed(): CrowleyException
     {
         return new CrowleyException(({
-            id: id,
-            status: CrowleyResponseStatus.ERROR,
+            status: MessageStatus.Error,
             message: "Connection closed.",
             details: {
                 errorId: "0x21000011",
@@ -30,7 +29,7 @@ export class CrowleyException extends AziraphaleException
     public readonly id: string;
     public readonly code: string;
 
-    public constructor({ message, details }: CrowleyErrorResponse, cause?: unknown, name = "CrowleyException")
+    public constructor({ message, details }: MessageError, cause?: unknown, name = "CrowleyException")
     {
         super(message, cause, name);
 

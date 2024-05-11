@@ -4,7 +4,7 @@
 
     import ContainerLayout from "@/layouts/ContainerLayout.vue";
 
-    import Aziraphale from "@/aziraphale";
+    import { Server } from "@/aziraphale";
 
     const $vuert = useVuert();
 
@@ -20,19 +20,7 @@
     //     }]
     // }));
 
-    class Room
-    {
-        public readonly id: string;
-        public readonly type: string;
-
-        public constructor(id: string, type: string)
-        {
-            this.id = id;
-            this.type = type;
-        }
-    }
-
-    const $aziraphale = new Aziraphale("ws://localhost:8000/squeeze/");
+    const server = new Server("ws://localhost:8000/squeeze/");
 
     const isConnected = ref(false);
 
@@ -41,33 +29,33 @@
 
     const connect = async () =>
     {
-        await $aziraphale.connect();
+        await server.connect();
 
-        isConnected.value = $aziraphale.isConnected;
+        isConnected.value = server.isConnected;
     };
 
     const createRoom = async (roomType: string) =>
     {
-        const response = await $aziraphale.createRoom(roomType);
+        const response = await server.createRoom(roomType);
 
-        console.log("Room created successfully:", response.payload.roomId);
+        console.log("Room created successfully:", response);
     };
-    const joinRoomById = async (roomId: string) =>
+    const joinRoomById = async (_roomId: string) =>
     {
-        await $aziraphale.joinRoomById(roomId);
+        const response = await server.joinRoomById(_roomId);
 
-        console.log("Room joined successfully.");
+        console.log("Room joined successfully:", response);
     };
     const joinRoomByType = async (roomType: string) =>
     {
-        await $aziraphale.joinRoomByType(roomType);
+        const response = await server.joinRoomByType(roomType);
 
-        console.log("Room joined successfully.");
+        console.log("Room joined successfully:", response);
     };
 
     const disconnect = () =>
     {
-        $aziraphale.disconnect();
+        server.disconnect();
 
         isConnected.value = false;
     };
