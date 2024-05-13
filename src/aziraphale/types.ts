@@ -1,21 +1,21 @@
-export type Payload = Record<string, unknown>;
-export interface ErrorDetails extends Payload
-{
-    errorId: string;
-    errorCode: string;
-}
-
 export enum MessageStatus
 {
     Success = "SUCCESS",
     Error = "ERROR"
 }
 
+export interface Payload extends Record<string, unknown> { }
 export interface MessageSuccess<T extends Payload = Payload>
 {
     status: MessageStatus.Success;
     payload: T;
     type: string;
+}
+
+export interface ErrorDetails extends Payload
+{
+    errorId: string;
+    errorCode: string;
 }
 export interface MessageError
 {
@@ -24,6 +24,7 @@ export interface MessageError
     details: ErrorDetails;
     type: string;
 }
+
 export type SimpleMessage<T extends Payload = Payload> = MessageSuccess<T> | MessageError;
 
 export interface MessageAck<T extends Payload = Payload> extends MessageSuccess<T> { id: string; }

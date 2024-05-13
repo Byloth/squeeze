@@ -32,35 +32,35 @@ export default class Messenger
 
     protected _onMessage = (evt: MessageEvent) =>
     {
-        const content: Message = JSON.parse(evt.data);
+        const message: Message = JSON.parse(evt.data);
 
-        if ("id" in content)
+        if ("id" in message)
         {
-            if (!(this._messages.has(content.id))) { throw new Error("Unknown message ID."); }
+            if (!(this._messages.has(message.id))) { throw new Error("Unknown message ID."); }
 
-            const [resolve, reject] = this._messages.get(content.id)!;
+            const [resolve, reject] = this._messages.get(message.id)!;
 
-            if (content.status === MessageStatus.Success)
+            if (message.status === MessageStatus.Success)
             {
-                resolve(content);
+                resolve(message);
             }
-            else if (content.status === MessageStatus.Error)
+            else if (message.status === MessageStatus.Error)
             {
-                reject(new CrowleyException(content));
+                reject(new CrowleyException(message));
             }
 
-            this._messages.delete(content.id);
+            this._messages.delete(message.id);
         }
-        else if ("roomId" in content)
+        else if ("roomId" in message)
         {
-            if (!(this._roomListeners.has(content.roomId))) { throw new Error("Unknown room ID."); }
+            if (!(this._roomListeners.has(message.roomId))) { throw new Error("Unknown room ID."); }
 
-            const callback = this._roomListeners.get(content.roomId)!;
-            callback(content);
+            const callback = this._roomListeners.get(message.roomId)!;
+            callback(message);
         }
         else
         {
-            this._onMessageSubscribers.call(content);
+            this._onMessageSubscribers.call(message);
         }
     };
     protected _onClose = (evt: CloseEvent) =>

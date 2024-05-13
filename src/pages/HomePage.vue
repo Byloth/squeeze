@@ -66,12 +66,12 @@
         <h1>Home page</h1>
         <div v-if="isConnected">
             <div class="col">
-                <button class="btn btn-primary" @click="createRoom('room.message')">
+                <button class="btn btn-primary" @click="createRoom('chat-room')">
                     Create new Room
                 </button>
             </div>
             <div class="col">
-                <button class="btn btn-info" @click="joinRoomByType('room.message')">
+                <button class="btn btn-info" @click="joinRoomByType('chat-room')">
                     Join existing Room
                 </button>
             </div>
