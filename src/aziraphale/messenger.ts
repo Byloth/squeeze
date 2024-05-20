@@ -7,7 +7,7 @@ import { CrowleyException } from "@/exceptions";
 
 import Connection from "./connection";
 import { MessageStatus } from "./types";
-import type { Message, MessageAck, Payload, RoomMessage, SimpleMessage } from "./types";
+import type { Message, MessageAck, Payload, RoomMessage, RoomMessagePayload, SimpleMessage } from "./types";
 
 export default class Messenger
 {
@@ -34,6 +34,8 @@ export default class Messenger
     {
         const message: Message = JSON.parse(evt.data);
 
+        console.log(message);
+
         if ("id" in message)
         {
             if (!(this._messages.has(message.id))) { throw new Error("Unknown message ID."); }
@@ -49,19 +51,26 @@ export default class Messenger
                 reject(new CrowleyException(message));
             }
 
-            this._messages.delete(message.id);
+            this._messages.delete(message.id); return;
         }
-        else if ("roomId" in message)
-        {
-            if (!(this._roomListeners.has(message.roomId))) { throw new Error("Unknown room ID."); }
 
-            const callback = this._roomListeners.get(message.roomId)!;
-            callback(message);
-        }
-        else
+        if (message.status === MessageStatus.Error) { throw new CrowleyException(message); }
+        if (message.type === "room:message")
         {
-            this._onMessageSubscribers.call(message);
+            const payload = message.payload as RoomMessagePayload;
+
+            if (!(payload.roomId)) { throw new Error("Missing room ID."); }
+            if (!(this._roomListeners.has(payload.roomId)))
+            {
+                throw new Error(`Unknown room ID: ${payload.roomId}`);
+            }
+
+            const callback = this._roomListeners.get(payload.roomId)!;
+
+            callback(message as RoomMessage); return;
         }
+
+        this._onMessageSubscribers.call(message);
     };
     protected _onClose = (evt: CloseEvent) =>
     {
@@ -73,23 +82,21 @@ export default class Messenger
         this._messages.clear();
     };
 
-    public fireAndForget(type: string, payload: Record<string, unknown>, roomId?: string): void
+    public fireAndForget(type: string, payload: Record<string, unknown>): void
     {
         const content = { type, payload };
 
-        if (roomId) { content.payload.roomId = roomId; }
+        console.log("Sending message:", content);
 
         this._connection.jsonSend(content);
     }
-    public prayAndWait<T extends Payload = Payload>(type: string, payload: Record<string, unknown>, roomId?: string)
+    public prayAndWait<T extends Payload = Payload>(type: string, payload: Record<string, unknown>)
         : Promise<MessageAck<T>>
     {
         return new TimedPromise<MessageAck<T>>((resolve, reject) =>
         {
             const id = uuid4().replaceAll("-", "");
             const content = { id, type, payload };
-
-            if (roomId) { content.payload.roomId = roomId; }
 
             this._messages.set(id, [resolve as PromiseResolver<MessageAck>, reject]);
 

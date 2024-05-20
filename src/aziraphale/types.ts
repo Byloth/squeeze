@@ -31,8 +31,11 @@ export interface MessageAck<T extends Payload = Payload> extends MessageSuccess<
 export interface MessageNack extends MessageError { id: string; }
 export type ResponseMessage<T extends Payload = Payload> = MessageAck<T> | MessageNack;
 
-export interface RoomMessageSuccess<T extends Payload = Payload> extends MessageSuccess<T> { roomId: string; }
-export interface RoomMessageError extends MessageError { roomId: string; }
-export type RoomMessage<T extends Payload = Payload> = RoomMessageSuccess<T> | RoomMessageError;
+export interface RoomMessagePayload<T = unknown> extends Payload
+{
+    roomId: string;
+    message: T;
+}
+export interface RoomMessage<T = unknown> extends MessageSuccess<RoomMessagePayload<T>> { type: "room:message"; }
 
 export type Message<T extends Payload = Payload> = SimpleMessage<T> | RoomMessage<T> | ResponseMessage<T>;

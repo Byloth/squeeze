@@ -69,6 +69,22 @@ export default new Config({
       component: () => import("./pages/HomePage.vue"),
       title: "Home page",
       meta: { topLevel: true }
+    },
+    {
+      id: 0x2,
+      name: "chat",
+      path: "/chat/:roomId",
+      component: () => import("./pages/ChatPage.vue"),
+      title: "Chat room",
+      meta: { topLevel: false }
+    },
+    {
+      id: 0x3,
+      name: "game",
+      path: "/game/:roomId",
+      component: () => import("./pages/GamePage.vue"),
+      title: "Game room",
+      meta: { topLevel: false }
     }
   ],
   version: "0.0.1α"

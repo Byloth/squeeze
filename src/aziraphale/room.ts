@@ -3,7 +3,7 @@ import { Subscribers } from "@byloth/core";
 import type Messenger from "./messenger";
 import type { MessageAck, Payload, RoomMessage } from "./types";
 
-export interface RoomPayload extends Payload
+export interface RoomDetails extends Payload
 {
     roomId: string;
     roomType: string;
@@ -18,32 +18,38 @@ export default class Room
     public readonly id: string;
     public readonly type: string;
 
-    public constructor(messenger: Messenger, { roomId, roomType }: RoomPayload)
+    public constructor(messenger: Messenger, { roomId, roomType }: RoomDetails)
     {
         this._onMessageSubscribers = new Subscribers();
 
         this._messenger = messenger;
-        this._unsubscribe = messenger.onRoomMessage(roomId, (message) => this._onMessageSubscribers.call(message));
+        this._unsubscribe = messenger.onRoomMessage(roomId, this.onMessage);
 
         this.id = roomId;
         this.type = roomType;
     }
 
-    public fireAndForget(type: string, payload: Record<string, unknown>): void
+    protected fireAndForget(type: string, payload: unknown): void
     {
-        this._messenger.fireAndForget(type, payload, this.id);
+        const content = {
+            roomId: this.id,
+            message: { type, payload }
+        };
+
+        this._messenger.fireAndForget("room:message", content);
     }
-    public prayAndWait<T extends Payload = Payload>(type: string, payload: Record<string, unknown>)
+    protected prayAndWait<T extends Payload = Payload>(type: string, payload: unknown)
         : Promise<MessageAck<T>>
     {
-        return this._messenger.prayAndWait<T>(type, payload, this.id);
+        const content = {
+            roomId: this.id,
+            message: { type, payload }
+        };
+
+        return this._messenger.prayAndWait<T>("room:message", content);
     }
 
-    public onMessage(callback: (message: RoomMessage) => void): () => void
-    {
-        this._onMessageSubscribers.add(callback);
-        return () => this._onMessageSubscribers.remove(callback);
-    }
+    protected onMessage(message: RoomMessage): void { }
 
     public leave()
     {

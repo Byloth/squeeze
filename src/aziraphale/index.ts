@@ -1,7 +1,10 @@
+import { Subscribers } from "@byloth/core";
+import type { Constructor } from "@byloth/core";
+
 import Connection from "./connection";
 import Messenger from "./messenger";
 import Room from "./room";
-import type { RoomPayload } from "./room";
+import type { RoomDetails } from "./room";
 
 /*
  * TODO:
@@ -20,10 +23,18 @@ import type { RoomPayload } from "./room";
  *  - Implementare un sistema per permettere all'applicazione di scalare orizzontalmente.
  */
 
-export class Server
+// eslint-disable-next-line @typescript-eslint/ban-types
+export class Server<T extends Record<string, Room> = { }>
 {
+    protected _roomTypes: Map<string, Constructor<Room>>;
+
     protected _connection: Connection;
     protected _messenger: Messenger;
+    protected _rooms: Map<string, Room>;
+
+    protected _onOpenSubscribers: Subscribers<[Event]>;
+    protected _onCloseSubscribers: Subscribers<[CloseEvent]>;
+    protected _onErrorSubscribers: Subscribers<[Event]>;
 
     public get isConnected(): boolean
     {
@@ -32,6 +43,8 @@ export class Server
 
     public constructor(endpoint: string)
     {
+        this._roomTypes = new Map();
+
         this._connection = new Connection(endpoint);
         this._messenger = new Messenger(this._connection);
         this._messenger.onMessage((message) =>
@@ -39,6 +52,12 @@ export class Server
             // eslint-disable-next-line no-console
             console.warn("Message received without any IDs; not implemented yet.");
         });
+
+        this._rooms = new Map();
+
+        this._onOpenSubscribers = new Subscribers();
+        this._onCloseSubscribers = new Subscribers();
+        this._onErrorSubscribers = new Subscribers();
     }
 
     public connect()
@@ -62,31 +81,82 @@ export class Server
         });
 
         this._connection.open();
+        this._connection.onOpen((evt) => this._onOpenSubscribers.call(evt));
+        this._connection.onClose((evt) => this._onCloseSubscribers.call(evt));
+        this._connection.onError((evt) => this._onErrorSubscribers.call(evt));
 
         return connection;
     }
 
-    public async createRoom(roomType: string)
+    public async createRoom<K extends string, V extends Room = T[K]>(roomType: K): Promise<V>
     {
-        const response = await this._messenger.prayAndWait<RoomPayload>("room:create", { roomType });
+        const response = await this._messenger.prayAndWait<RoomDetails>("room:create", { roomType });
 
-        return new Room(this._messenger, response.payload);
+        const RoomClass = this._roomTypes.get(roomType)!;
+        const room = new RoomClass(this._messenger, response.payload) as V;
+
+        this._rooms.set(room.id, room);
+
+        return room;
     }
-    public async joinRoomById(roomId: string)
+    public async joinRoomById<K extends string, V extends Room = T[K]>(roomId: K): Promise<V>
     {
-        const response = await this._messenger.prayAndWait<RoomPayload>("room:join:id", { roomId });
+        const response = await this._messenger.prayAndWait<RoomDetails>("room:join:id", { roomId });
 
-        return new Room(this._messenger, response.payload);
+        const RoomClass = this._roomTypes.get(response.payload.roomType)!;
+        const room = new RoomClass(this._messenger, response.payload) as V;
+
+        this._rooms.set(room.id, room);
+
+        return room;
     }
-    public async joinRoomByType(roomType: string)
+    public async joinRoomByType<K extends string, V extends Room = T[K]>(roomType: K, createIfNotExists = false)
+        : Promise<V>
     {
-        const response = await this._messenger.prayAndWait<RoomPayload>("room:join:type", { roomType });
+        const payload: Record<string, unknown> = { roomType };
 
-        return new Room(this._messenger, response.payload);
+        if (createIfNotExists) { payload.createIfNotExists = true; }
+
+        const response = await this._messenger.prayAndWait<RoomDetails>("room:join:type", payload);
+
+        const RoomClass = this._roomTypes.get(roomType)!;
+        const room = new RoomClass(this._messenger, response.payload) as V;
+
+        this._rooms.set(room.id, room);
+
+        return room;
+    }
+
+    public getRoom<V extends T[keyof T]>(roomId: string): V
+    {
+        return this._rooms.get(roomId) as V;
     }
 
     public disconnect(code?: number, reason?: string)
     {
         this._connection.close(code, reason);
+    }
+
+    public onOpen(callback: (evt: Event) => void)
+    {
+        return this._onOpenSubscribers.add(callback);
+    }
+    public onClose(callback: (evt: CloseEvent) => void)
+    {
+        return this._onCloseSubscribers.add(callback);
+    }
+    public onError(callback: (evt: Event) => void)
+    {
+        return this._onErrorSubscribers.add(callback);
+    }
+
+    public register<K extends string, V extends Room>(roomType: K, RoomClass: Constructor<V>)
+    {
+        type RoomsMap = T & Record<K, V>;
+
+        if (this._roomTypes.has(roomType)) { throw new Error("Room type already registered."); }
+        this._roomTypes.set(roomType, RoomClass);
+
+        return this as Server<{ [L in keyof RoomsMap]: RoomsMap[L] }>;
     }
 }

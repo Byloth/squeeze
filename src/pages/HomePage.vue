@@ -1,110 +1,80 @@
 <script lang="ts" setup>
     import { ref } from "vue";
+    import { useRouter } from "vue-router";
+
     import { useVuert } from "@byloth/vuert";
 
     import ContainerLayout from "@/layouts/ContainerLayout.vue";
+    import useSocket from "@/stores/socket";
 
-    import { Server } from "@/aziraphale";
-
+    const $router = useRouter();
+    const $socket = useSocket();
     const $vuert = useVuert();
 
-    // onMounted(() => $vuert.emit({
-    //     type: "success",
-    //     title: "It works!",
-    //     icon: "thumbs-up",
-    //     message: "This application is running properly.",
-    //     dismissible: true,
-    //     actions: [{
-    //         label: "OK",
-    //         type: "primary"
-    //     }]
-    // }));
+    const username = ref<string>("");
 
-    const server = new Server("ws://localhost:8000/squeeze/");
-
-    const isConnected = ref(false);
-
-    const roomId = ref("");
-    const message = ref("");
-
-    const connect = async () =>
+    const joinTheChat = async () =>
     {
-        await server.connect();
+        await $socket.connect();
 
-        isConnected.value = server.isConnected;
+        const room = await $socket.joinRoomByType("room:chat", true);
+
+        $vuert.emit({
+            type: "success",
+            title: "Connected established!",
+            icon: "link",
+            message: "You are now connected to the server.",
+            dismissible: true,
+            timeout: 2500
+        });
+
+        return $router.push({ name: "chat", params: { roomId: room.id } });
     };
-
-    const createRoom = async (roomType: string) =>
+    const joinTheGame = async () =>
     {
-        const response = await server.createRoom(roomType);
+        await $socket.connect();
 
-        console.log("Room created successfully:", response);
-    };
-    const joinRoomById = async (_roomId: string) =>
-    {
-        const response = await server.joinRoomById(_roomId);
+        const room = await $socket.joinRoomByType("room:game", true);
 
-        console.log("Room joined successfully:", response);
-    };
-    const joinRoomByType = async (roomType: string) =>
-    {
-        const response = await server.joinRoomByType(roomType);
+        $vuert.emit({
+            type: "success",
+            title: "Connected established!",
+            icon: "link",
+            message: "You are now connected to the server.",
+            dismissible: true,
+            timeout: 2500
+        });
 
-        console.log("Room joined successfully:", response);
-    };
-
-    const disconnect = () =>
-    {
-        server.disconnect();
-
-        isConnected.value = false;
+        return $router.push({ name: "game", params: { roomId: room.id } });
     };
 </script>
 
 <template>
     <ContainerLayout is="main" id="home-page">
         <h1>Home page</h1>
-        <div v-if="isConnected">
+        <div class="row">
             <div class="col">
-                <button class="btn btn-primary" @click="createRoom('chat-room')">
-                    Create new Room
+                <button class="btn btn-success" @click="joinTheChat">
+                    Join the Chat
                 </button>
             </div>
             <div class="col">
-                <button class="btn btn-info" @click="joinRoomByType('chat-room')">
-                    Join existing Room
-                </button>
+                <hr />
             </div>
-            <hr />
             <div class="col">
-                <input v-model="roomId"
-                       class="form-control"
-                       placeholder="Room ID" />
-                <button class="btn btn-info" @click="joinRoomById(roomId)">
-                    Join specific Room
-                </button>
-            </div>
-            <hr />
-            <div class="col">
-                <input v-model="message"
-                       class="form-control"
-                       placeholder="Write something..." />
-                <button class="btn btn-info" @click="joinRoomById(roomId)">
-                    Send message
-                </button>
-            </div>
-            <hr />
-            <div class="col">
-                <button class="btn btn-warning" @click="disconnect">
-                    Disconnect
-                </button>
-            </div>
-        </div>
-        <div v-else class="row">
-            <div class="col">
-                <button class="btn btn-success" @click="connect">
-                    Connect
-                </button>
+                <form @submit.prevent="joinTheGame">
+                    <label>
+                        Username:
+                        <input v-model="username"
+                               class="form-control"
+                               type="text"
+                               required />
+                    </label>
+                    <hr />
+                    <button class="btn btn-success" type="submit">
+                        Join the Game
+                    </button>
+                </form>
             </div>
         </div>
     </ContainerLayout>
